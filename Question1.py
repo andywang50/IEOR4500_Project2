@@ -12,39 +12,17 @@ from cvxopt import matrix, solvers
 
 from func import readdata, feasible, eval_objective
 
-if __name__ == "__main__":
-	if len(sys.argv) != 2: 
-		sys.exit("datafile")
-		
-	filename = sys.argv[1]
-	print("input: ", sys.argv[1])
-	
-
-
-	alldata = readdata(filename)
-
-	feasible(alldata)
-
-	# use outside library
-	Q = 2 * matrix(alldata['covariance'] * alldata['lambda'])
-	p = -matrix(alldata['mu'])
-	A = matrix(np.ones((alldata['n'],1)), (1,alldata['n']))
-	b = matrix(1.0)
-	G = matrix(np.vstack((np.eye(4),-1*np.eye(4))))
-	h = matrix(np.hstack((alldata['upper'],alldata['lower'])))
-	
-	sol=solvers.qp(Q, p, G, h, A, b)
-	
-	print(sol['x'], sol['primal objective'])
-	
-	
+def optimize(alldata, num_iter, covariance_type = 'original'):
+	assert covariance_type in ['original', 'modified']
 	# our algo
-	num_iter = 100000
 	x = alldata['x']
 	lambdaval = alldata['lambda']
 	n = alldata['n']
 	mu = alldata['mu']
-	cov = alldata['covariance']
+	if covariance_type == 'original':
+		cov = alldata['covariance']
+	else:
+		cov = alldata['modified_covariance']
 	lb = alldata['lower']
 	ub = alldata['upper']
 	
@@ -78,13 +56,75 @@ if __name__ == "__main__":
 		## improvement phase 2
 		s = np.dot(mu, y) - 2*lambdaval*np.matmul(np.matmul(x.T, cov),y)
 		s = s / (2 * lambdaval * np.matmul(np.matmul(y.T, cov),y))
-#==============================================================================
-# 		tmp_x = x+s*y
-# 		grad = 2 * lambdaval * np.matmul(cov, tmp_x) - mu
-# 		print(np.dot(grad,y))
-#==============================================================================
+
 		if s < 0:
 			s = 0
 		if s > 1:
 			s = 1
 		x = x + s * y
+	alldata['x'] = x
+	return
+	
+def apply_factor(alldata, total_components):
+	e_values, e_vectors = np.linalg.eigh(alldata['covariance'])
+	e_values = e_values[::-1]
+	e_vectors = e_vectors[:, ::-1]
+	new_cov = np.zeros(alldata['covariance'].shape)
+	for nth_component in range(total_components):
+		new_cov += e_values[nth_component] \
+			* np.outer(e_vectors[:,nth_component],e_vectors[:,nth_component])
+	new_cov += np.diag(np.diag(alldata['covariance'] - new_cov))
+	alldata['modified_covariance'] = new_cov
+
+	
+if __name__ == "__main__":
+	if len(sys.argv) != 2: 
+		sys.exit("datafile")
+		
+	filename = sys.argv[1]
+	print("input: ", sys.argv[1])
+	
+
+	alldata = readdata(filename)
+
+	feasible(alldata)
+
+	# use outside library
+	Q = 2 * matrix(alldata['covariance'] * alldata['lambda'])
+	p = -matrix(alldata['mu'])
+	A = matrix(np.ones((alldata['n'],1)), (1,alldata['n']))
+	b = matrix(1.0)
+	G = matrix(np.vstack((np.eye(4),-1*np.eye(4))))
+	h = matrix(np.hstack((alldata['upper'],alldata['lower'])))
+	
+	sol=solvers.qp(Q, p, G, h, A, b)
+	
+	print(sol['x'], sol['primal objective'])
+	
+	# our algo
+	num_iter = 100000
+
+	optimize(alldata, num_iter)
+	print(alldata['x'], eval_objective(alldata['lambda'], alldata['covariance'],
+							alldata['mu'], alldata['x']))
+		
+
+	# Extra Credit					
+	apply_factor(alldata, 3)
+	
+	# use outside library
+	Q = 2 * matrix(alldata['modified_covariance'] * alldata['lambda'])
+	sol=solvers.qp(Q, p, G, h, A, b)
+	
+	print(sol['x'], sol['primal objective'])
+	
+	# our algo	
+	
+	optimize(alldata, num_iter, 'modified')
+	print(alldata['x'], eval_objective(alldata['lambda'], alldata['modified_covariance'],
+							alldata['mu'], alldata['x']))
+							
+	
+
+	
+
