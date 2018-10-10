@@ -11,7 +11,7 @@ import sys
 from cvxopt import matrix, solvers 
 
 from func import readdata, feasible, eval_objective
-
+from power import runpower
 def optimize(alldata, num_iter, covariance_type = 'original'):
 	assert covariance_type in ['original', 'modified']
 	# our algo
@@ -66,9 +66,15 @@ def optimize(alldata, num_iter, covariance_type = 'original'):
 	return
 	
 def apply_factor(alldata, total_components):
-	e_values, e_vectors = np.linalg.eigh(alldata['covariance'])
-	e_values = e_values[::-1]
-	e_vectors = e_vectors[:, ::-1]
+#==============================================================================
+# 	e_values, e_vectors = np.linalg.eigh(alldata['covariance'])
+# 	e_values = e_values[::-1]
+# 	e_vectors = e_vectors[:, ::-1]
+#==============================================================================
+	cov = alldata['covariance']
+	n = cov.shape[0]
+	e_values, e_vectors = runpower(alldata['covariance'],n,tolerance=0, max_num=total_components )
+	
 	new_cov = np.zeros(alldata['covariance'].shape)
 	for nth_component in range(total_components):
 		new_cov += e_values[nth_component] \
@@ -78,7 +84,7 @@ def apply_factor(alldata, total_components):
 
 	
 if __name__ == "__main__":
-	if len(sys.argv) != 2: 
+	if len(sys.argv) != 2:
 		sys.exit("datafile")
 		
 	filename = sys.argv[1]
@@ -102,7 +108,7 @@ if __name__ == "__main__":
 	print(sol['x'], sol['primal objective'])
 	
 	# our algo
-	num_iter = 100000
+	num_iter = 20000
 
 	optimize(alldata, num_iter)
 	print(alldata['x'], eval_objective(alldata['lambda'], alldata['covariance'],
@@ -110,7 +116,7 @@ if __name__ == "__main__":
 		
 
 	# Extra Credit					
-	apply_factor(alldata, 3)
+	apply_factor(alldata, 2)
 	
 	# use outside library
 	Q = 2 * matrix(alldata['modified_covariance'] * alldata['lambda'])

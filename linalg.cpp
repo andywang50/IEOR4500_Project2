@@ -33,6 +33,24 @@ double dotProduct(double* v1, double* v2, int n) {
 	return result;
 }
 
+double norm(double* v, int n) {
+	double result = 0.0;
+	result = dotProduct(v, v, n);
+	result = sqrt(result);
+	return result;
+}
+
+double* crossProduct(double* v1, double* v2, int n) {
+	double *result = (double *)calloc(n*n, sizeof(double));
+	for (int i = 0; i < n; ++i) {
+		for (int j = 0; j < n; ++j) {
+			result[i*n + j] = v1[i] * v2[j];
+		}
+	}
+	return result;
+}
+
+
 /*
  Assume mat is a square matrix of size n*n
  */
@@ -47,4 +65,11 @@ double* matrixTimesVector(double* mat, double* v, int n) {
 
 	return result;
 
+}
+
+void normalize(double** pv, int n) {
+	double normv = norm(*pv, n);
+	for (int i = 0; i < n; ++i) {
+		(*pv)[i] = (*pv)[i] / normv;
+	}
 }

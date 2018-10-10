@@ -5,13 +5,87 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include "algo.h"
+#include "power.h"
 
 int readit(char *nameoffile, int *addressofn, double **, double **, double **, double **, double *);
 void print_vector(double* v, int n){
     for (int i=0; i < n; ++i){
-        printf("%f", v[i]);
+        printf("%f, ", v[i]);
     }
+	printf("\n");
+}
+
+void print_square_matrix(double* mat, int n) {
+	for (int i = 0; i < n; ++i) {
+		for (int j = 0; j < n; ++j) {
+			printf("%f, ", mat[i*n+j]);
+		}
+		printf("\n");
+	}
+}
+
+void optimize(int n, double *lb, double *ub, double *mu, double *covariance, double lambda, double **px, int num_iter = 100000) {
+	//print_vector(*px, n);
+	for (int k = 0; k < num_iter; ++k) {
+		if (k % 10000 == 0) {
+			printf("%d, %f \n", k, eval_objective(lambda, covariance, mu, *px, n));
+		}
+
+		double* gk = scalerProduct(2 * lambda, matrixTimesVector(covariance, *px, n), n);
+		gk = vectorSubstract(gk, mu, n);
+		double *y = (double *)calloc(n, sizeof(double));
+
+		double best_improvement = DBL_MAX;
+		// improvement phase 1
+		for (int i = 0; i < n; ++i) {
+			double threshold = gk[i];
+			double *y_cand = (double *)calloc(n, sizeof(double));
+			double y_cand_sum = 0.0;
+			for (int j = 0; j < n; ++j) {
+				if (i == j) {
+					continue;
+				}
+				if (gk[j] < threshold) {
+					double delta = ub[j] - (*px)[j];
+					y_cand[j] = delta;
+					y_cand_sum += delta;
+				}
+				else {
+					double delta = lb[j] - (*px)[j];
+					y_cand[j] = delta;
+					y_cand_sum += delta;
+				}
+			}
+			y_cand[i] = -y_cand_sum;
+			if (((*px)[i] + y_cand[i] <= ub[i]) && ((*px)[i] + y_cand[i] >= lb[i])) {
+				double improvement = dotProduct(gk, y_cand, n);
+				if (improvement < best_improvement) {
+					best_improvement = improvement;
+					y = y_cand;
+				}
+			}
+		}
+		//print_vector(y,n);
+		if (fabs(best_improvement) < 1e-6) break;
+		// improvement phase 2
+		double* Sy = matrixTimesVector(covariance, y, n);
+		double xSy = dotProduct(*px, Sy, n);
+		double s = dotProduct(mu, y, n) - 2 * lambda * xSy;
+		s = s / (2 * lambda);
+		s = s / dotProduct(y, Sy, n);
+		if (s < 0) {
+			s = 0;
+		}
+		if (s > 1) {
+			s = 1;
+		}
+		*px = vectorAdd(*px, scalerProduct(s, y, n), n);
+
+
+
+	}
 }
 
 int main(int argc, char **argv)
@@ -19,6 +93,7 @@ int main(int argc, char **argv)
     int retcode = 0;
     int n;
     double *lb, *ub, *covariance, *mu, lambda;
+	srand((long)time(NULL));
     
     if (argc != 2){
         printf("usage: qp1 filename\n");  retcode = 1;
@@ -35,66 +110,22 @@ int main(int argc, char **argv)
         return retcode;
     }
     
+	optimize(n, lb, ub, mu, covariance, lambda, &x);
+	print_vector(x, n);
 
-    int num_iter = 100000;
-    for (int k = 0; k < num_iter; ++k){
-        if (k%10000 == 0){
-            printf("%d, %f \n",k, eval_objective(lambda, covariance, mu, x, n));
-        }
-        
-        double* gk = scalerProduct(2 * lambda, matrixTimesVector(covariance, x, n), n);
-        gk = vectorSubstract(gk, mu, n);
-        double *y = (double *)calloc(n, sizeof(double));
-        
-        double best_improvement = DBL_MAX;
-        // improvement phase 1
-        for (int i = 0; i < n; ++i){
-            double threshold = gk[i];
-            double *y_cand = (double *)calloc(n, sizeof(double));
-            double y_cand_sum = 0.0;
-            for (int j = 0; j < n; ++j){
-                if (i==j){
-                    continue;
-                }
-                if (gk[j] < threshold){
-                    double delta =ub[j] - x[j];
-                    y_cand[j] = delta;
-                    y_cand_sum += delta;
-                }
-                else{
-                    double delta = lb[j] - x[j];
-                    y_cand[j] = delta;
-                    y_cand_sum += delta;
-                }
-            }
-            y_cand[i] = -y_cand_sum;
-            if ((x[i] + y_cand[i] <= ub[i]) && (x[i] + y_cand[i] >= lb[i])){
-                double improvement = dotProduct(gk, y_cand, n);
-                if (improvement < best_improvement){
-                    best_improvement = improvement;
-                    y = y_cand;
-                }
-            }
-        }
-        //print_vector(y,n);
-        if (fabs(best_improvement) < 1e-6) break;
-        // improvement phase 2
-        double* Sy = matrixTimesVector(covariance, y, n);
-        double xSy = dotProduct(x, Sy, n);
-        double s = dotProduct(mu ,y, n) - 2 * lambda * xSy;
-        s = s / (2 * lambda);
-        s = s / dotProduct(y, Sy, n);
-        if (s < 0){
-            s = 0;
-        }
-        if (s > 1){
-            s = 1;
-        }
-        x = vectorAdd(x, scalerProduct(s, y, n), n);
- 
-        
-        
-    }
+	printf("Extra Credit\n\n");
+	int num_spectra = 2;
+	double tol = 0.01;
+	double* new_cov;
+	//run_power(covariance, n, num_spectra, &new_cov);
+	run_power(covariance, n, tol, &new_cov);
+
+	for (int i = 0; i < n; ++i) {
+		new_cov[i*n + i] = covariance[i*n + i];
+	}
+	print_square_matrix(new_cov, n);
+	optimize(n, lb, ub, mu, new_cov, lambda, &x);
+	print_vector(x, n);
 	return retcode;
 //BACK:
 //    return retcode;
