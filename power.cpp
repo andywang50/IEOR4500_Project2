@@ -1,5 +1,16 @@
 # include "power.h"
 
+/*
+	run the power method once
+	Parameters:
+		double *matrix: matrix array
+		int n: size of the square matrix
+		double *evalue: address of the leading eigenvalue
+		double **evector: address of the leading eigenvector
+
+	Returns:
+		void
+*/
 void run_power_once(double *matrix, int n, double *evalue, double **evector) {
 	double *v = (double*)calloc(n, sizeof(double));
 	for (int i = 0; i < n; ++i) {
@@ -23,6 +34,17 @@ void run_power_once(double *matrix, int n, double *evalue, double **evector) {
 	*evector = v;
 }
 
+/*
+	run the power method until a specific number of spectra is reached.
+	Parameters:
+		double *matrix: matrix array
+		int n: size of the square matrix
+		int num_spectra: maximum number of spectra to be calculated.
+		double **new_matrix: address of the reconstructed (approximation) matrix
+	Returns:
+		void
+*/
+
 void run_power(double *matrix, int n, int num_spectra, double **new_matrix) {
 	double *m = (double*)calloc(n*n, sizeof(double));
 	for (int i = 0; i < n*n; ++i) {
@@ -40,13 +62,24 @@ void run_power(double *matrix, int n, int num_spectra, double **new_matrix) {
 		tmp = scalerProduct(evalue, tmp, n*n);
 		m = vectorAdd(m, tmp, n*n);
 		matrix_copy = vectorSubstract(matrix_copy, tmp, n*n);
-
+		free(evector);
+		free(tmp);
 	}
 	
 	free(matrix_copy);
 	*new_matrix = m;
 }
 
+/*
+	run the power method until the eigenvalue is smaller than a fraction of the leading eigenvalue.
+	Parameters:
+		double *matrix: matrix array
+		int n: size of the square matrix
+		double tol: the tolerance
+		double **new_matrix: address of the reconstructed (approximation) matrix
+	Returns:
+		void
+*/
 void run_power(double *matrix, int n, double tol, double **new_matrix) {
 	double *m = (double*)calloc(n*n, sizeof(double));
 	for (int i = 0; i < n*n; ++i) {
@@ -76,11 +109,10 @@ void run_power(double *matrix, int n, double tol, double **new_matrix) {
 		m = vectorAdd(m, tmp, n*n);
 		matrix_copy = vectorSubstract(matrix_copy, tmp, n*n);
 		count++;
+		free(evector);
+		free(tmp);
 	}
 		
-
-	
-
 	free(matrix_copy);
 	*new_matrix = m;
 }

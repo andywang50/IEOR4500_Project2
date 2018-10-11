@@ -10,11 +10,41 @@ import pandas as pd
 import sys
 
 def eval_objective(lambdaval, cov, mu, x):
+	"""
+	Evaluate the objective function
+	Parameters
+	----------
+		lambdaval: value of lambda
+		cov: covariance matrix
+		mu: mu vector
+		x: current solution
+	Returns
+	-------
+		value of the objective function at x
+	"""
 	tmp1 = np.matmul(np.matmul(x.T, cov),x)
 	tmp2 = np.dot(mu,x)
 	return lambdaval*tmp1 - tmp2
 
+
 def feasible(alldata): 
+	"""
+	Checks whether the QP is feasible. If yes, provide a feasible solution,
+	and store it in alldata['x'].
+	Parameters
+	----------
+		alldata: a dictionary of the following form:
+			'n': size of the QP problem
+			'lower': lower bound vector
+			'upper': upper bound vector
+			'x': solution vector
+			'lambda': value of lambda
+			'covariance': covariance matrix
+
+	Returns
+	-------
+		No returns
+	"""
 	n = alldata['n']
 	lower = alldata['lower']
 	upper = alldata['upper']
@@ -49,6 +79,20 @@ def breakexit(foo):
 		sys.exit("bye")
 
 def readdata(filename):
+	"""
+	Read data from the file
+	Parameters
+	---------
+		filename: string of filename path
+	Returns:
+		alldata: a dictionary of the following form:
+			'n': size of the QP problem
+			'lower': lower bound vector
+			'upper': upper bound vector
+			'lambda': value of lambda
+			'covariance': covariance matrix
+			'x': initialized solution vector, same as 'lower'
+	"""
 	# read data
 	try:
 		f = open(filename, 'r')

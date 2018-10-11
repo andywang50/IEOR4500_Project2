@@ -8,7 +8,17 @@
 
 #include "algo.h"
 
-
+/*
+	Checks whether QP is feasible. If yes, initiaites a feasible solution.
+	Parameters:
+		double *lb: lower bound array
+		double *ub: upper bound array
+		double *mu: mu array
+		double **px: address of solution array
+		int n: size of the QP problem
+	Returns:
+		retcode
+*/
 int feasible(double *lb,double *ub, double *mu, double **px, int n){
     double lb_sum = 0.0;
     double ub_sum = 0.0;
@@ -44,10 +54,23 @@ int feasible(double *lb,double *ub, double *mu, double **px, int n){
     return 0;
 }
 
+/*
+	Evaluate the objective function
+	Parameters:
+		double lambdaval: value of lambda
+		double *cov: covariance matrix array
+		double *mu: mu array
+		double *x: current solution array
+		int n: size of the QP problem
+	Returns:
+		the value of the objective function
+*/
 double eval_objective(double lambdaval, double *cov, double *mu, double *x, int n){
     double* tmp1 = matrixTimesVector(cov, x, n);
     double tmp2 = dotProduct(tmp1, x, n);
     double tmp3 = dotProduct(mu,x,n);
+
+	free(tmp1);
     return lambdaval * tmp2 - tmp3;
     
 }

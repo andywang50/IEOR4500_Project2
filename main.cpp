@@ -10,83 +10,10 @@
 #include "power.h"
 
 int readit(char *nameoffile, int *addressofn, double **, double **, double **, double **, double *);
-void print_vector(double* v, int n){
-    for (int i=0; i < n; ++i){
-        printf("%f, ", v[i]);
-    }
-	printf("\n");
-}
+void print_vector(double*, int);
+void print_square_matrix(double*, int);
+void optimize(int, double*, double*, double*, double*, double, double**, int num_iter = 100000);
 
-void print_square_matrix(double* mat, int n) {
-	for (int i = 0; i < n; ++i) {
-		for (int j = 0; j < n; ++j) {
-			printf("%f, ", mat[i*n+j]);
-		}
-		printf("\n");
-	}
-}
-
-void optimize(int n, double *lb, double *ub, double *mu, double *covariance, double lambda, double **px, int num_iter = 100000) {
-	//print_vector(*px, n);
-	for (int k = 0; k < num_iter; ++k) {
-		if (k % 10000 == 0) {
-			printf("%d, %f \n", k, eval_objective(lambda, covariance, mu, *px, n));
-		}
-
-		double* gk = scalerProduct(2 * lambda, matrixTimesVector(covariance, *px, n), n);
-		gk = vectorSubstract(gk, mu, n);
-		double *y = (double *)calloc(n, sizeof(double));
-
-		double best_improvement = DBL_MAX;
-		// improvement phase 1
-		for (int i = 0; i < n; ++i) {
-			double threshold = gk[i];
-			double *y_cand = (double *)calloc(n, sizeof(double));
-			double y_cand_sum = 0.0;
-			for (int j = 0; j < n; ++j) {
-				if (i == j) {
-					continue;
-				}
-				if (gk[j] < threshold) {
-					double delta = ub[j] - (*px)[j];
-					y_cand[j] = delta;
-					y_cand_sum += delta;
-				}
-				else {
-					double delta = lb[j] - (*px)[j];
-					y_cand[j] = delta;
-					y_cand_sum += delta;
-				}
-			}
-			y_cand[i] = -y_cand_sum;
-			if (((*px)[i] + y_cand[i] <= ub[i]) && ((*px)[i] + y_cand[i] >= lb[i])) {
-				double improvement = dotProduct(gk, y_cand, n);
-				if (improvement < best_improvement) {
-					best_improvement = improvement;
-					y = y_cand;
-				}
-			}
-		}
-		//print_vector(y,n);
-		if (fabs(best_improvement) < 1e-6) break;
-		// improvement phase 2
-		double* Sy = matrixTimesVector(covariance, y, n);
-		double xSy = dotProduct(*px, Sy, n);
-		double s = dotProduct(mu, y, n) - 2 * lambda * xSy;
-		s = s / (2 * lambda);
-		s = s / dotProduct(y, Sy, n);
-		if (s < 0) {
-			s = 0;
-		}
-		if (s > 1) {
-			s = 1;
-		}
-		*px = vectorAdd(*px, scalerProduct(s, y, n), n);
-
-
-
-	}
-}
 
 int main(int argc, char **argv)
 {
@@ -114,11 +41,11 @@ int main(int argc, char **argv)
 	print_vector(x, n);
 
 	printf("Extra Credit\n\n");
-	int num_spectra = 2;
+	int num_spectra = 1;
 	double tol = 0.01;
 	double* new_cov;
-	//run_power(covariance, n, num_spectra, &new_cov);
-	run_power(covariance, n, tol, &new_cov);
+	run_power(covariance, n, num_spectra, &new_cov);
+	//run_power(covariance, n, tol, &new_cov);
 
 	for (int i = 0; i < n; ++i) {
 		new_cov[i*n + i] = covariance[i*n + i];
@@ -126,11 +53,30 @@ int main(int argc, char **argv)
 	print_square_matrix(new_cov, n);
 	optimize(n, lb, ub, mu, new_cov, lambda, &x);
 	print_vector(x, n);
+
+	free(lb);
+	free(ub);
+	free(covariance);
+	free(mu);
+	free(x);
 	return retcode;
 //BACK:
 //    return retcode;
 }
 
+/*
+	read data from datafile.
+	Parameters:
+		char* filename: filename
+		int* address_of_n: address of n, where n is the size of the QP.
+		double **plb£º address of lower bound array
+		double **pub£º address of upper bound array
+		double **pmu£º address of mu array
+		double **pcovariance£º address of covariance array
+		double *lambda: address of lambda
+	Returns:
+		retcode
+*/
 int readit(char *filename, int *address_of_n, double **plb, double **pub,
            double **pmu, double **pcovariance, double *lambda)
 {
@@ -213,4 +159,116 @@ int readit(char *filename, int *address_of_n, double **plb, double **pub,
 BACK:
     
     return readcode;
+}
+
+/*
+	print a vector in console
+	Parameters:
+		double *v: array
+		int n: size
+	Returns:
+		void
+*/
+void print_vector(double* v, int n) {
+	for (int i = 0; i < n; ++i) {
+		printf("%f, ", v[i]);
+	}
+	printf("\n");
+}
+
+/*
+	print a matrix in console
+	Parameters:
+		double *matrix: the matrix array (assumes its a square matrix with size n)
+		int n: size of the square matrix (n*n entries)
+	Returns:
+		void
+*/
+void print_square_matrix(double* mat, int n) {
+	for (int i = 0; i < n; ++i) {
+		for (int j = 0; j < n; ++j) {
+			printf("%f, ", mat[i*n + j]);
+		}
+		printf("\n");
+	}
+}
+
+/*
+	algorithm2 as described in the pdf
+	Parameters:
+		int n: size of the Quadratice Programming problem
+		double *lb£º lower bound array
+		double *ub£º upper bound array
+		double *mu£º mu array
+		double *covariance£º covariance array
+		double lambda: lambda in the QP
+		double **px: address of the solution array
+		int num_iter: (optional) maximum iteration, default = 100000
+	Returns:
+		void
+*/
+void optimize(int n, double *lb, double *ub, double *mu, double *covariance, double lambda, double **px, int num_iter) {
+	//print_vector(*px, n);
+	for (int k = 0; k < num_iter; ++k) {
+		if (k % 10000 == 0) {
+			printf("%d, %f \n", k, eval_objective(lambda, covariance, mu, *px, n));
+		}
+
+		double* gk = scalerProduct(2 * lambda, matrixTimesVector(covariance, *px, n), n);
+		gk = vectorSubstract(gk, mu, n);
+		double *y = (double *)calloc(n, sizeof(double));
+
+		double best_improvement = DBL_MAX;
+
+		// improvement phase 1
+		for (int i = 0; i < n; ++i) {
+			double threshold = gk[i];
+			double *y_cand = (double *)calloc(n, sizeof(double));
+			double y_cand_sum = 0.0;
+			for (int j = 0; j < n; ++j) {
+				if (i == j) {
+					continue;
+				}
+				if (gk[j] < threshold) {
+					double delta = ub[j] - (*px)[j];
+					y_cand[j] = delta;
+					y_cand_sum += delta;
+				}
+				else {
+					double delta = lb[j] - (*px)[j];
+					y_cand[j] = delta;
+					y_cand_sum += delta;
+				}
+			}
+			y_cand[i] = -y_cand_sum;
+			if (((*px)[i] + y_cand[i] <= ub[i]) && ((*px)[i] + y_cand[i] >= lb[i])) {
+				double improvement = dotProduct(gk, y_cand, n);
+				if (improvement < best_improvement) {
+					best_improvement = improvement;
+					y = y_cand;
+				}
+			}
+		}
+
+		free(gk);
+
+		//print_vector(y,n);
+		if (fabs(best_improvement) < 1e-6) break;
+		// improvement phase 2
+		double* Sy = matrixTimesVector(covariance, y, n);
+		double xSy = dotProduct(*px, Sy, n);
+		double s = dotProduct(mu, y, n) - 2 * lambda * xSy;
+		s = s / (2 * lambda);
+		s = s / dotProduct(y, Sy, n);
+		if (s < 0) {
+			s = 0;
+		}
+		if (s > 1) {
+			s = 1;
+		}
+		*px = vectorAdd(*px, scalerProduct(s, y, n), n);
+
+		free(y);
+		free(Sy);
+	}
 }
