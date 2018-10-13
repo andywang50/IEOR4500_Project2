@@ -22,6 +22,10 @@ int feasible(double *lb,double *ub, double *mu, double **px, int n){
     }
     
     double *x = (double*) calloc(n, sizeof(double));
+    if (x == NULL) {
+        printf("no memory for x\n");
+        return 1;
+    }
     for (int i =0; i < n; ++i){
         x[i] = lb[i];
     }

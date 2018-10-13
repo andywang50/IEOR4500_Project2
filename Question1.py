@@ -12,6 +12,7 @@ from cvxopt import matrix, solvers
 
 from func import readdata, feasible, eval_objective
 from power import runpower
+
 def optimize(alldata, num_iter, covariance_type = 'original'):
 	assert covariance_type in ['original', 'modified']
 	# our algo
@@ -90,21 +91,20 @@ if __name__ == "__main__":
 	filename = sys.argv[1]
 	print("input: ", sys.argv[1])
 	
-
 	alldata = readdata(filename)
-
+    
 	feasible(alldata)
 
 	# use outside library
 	Q = 2 * matrix(alldata['covariance'] * alldata['lambda'])
 	p = -matrix(alldata['mu'])
-	A = matrix(np.ones((alldata['n'],1)), (1,alldata['n']))
+	A = matrix(np.ones((1,alldata['n'])))
 	b = matrix(1.0)
-	G = matrix(np.vstack((np.eye(4),-1*np.eye(4))))
-	h = matrix(np.hstack((alldata['upper'],alldata['lower'])))
+	G = matrix(np.vstack((np.eye(alldata['n']),-1*np.eye(alldata['n']))))
+	h = matrix(np.hstack((alldata['upper'],-1*alldata['lower'])))
 	
 	sol=solvers.qp(Q, p, G, h, A, b)
-	
+
 	print(sol['x'], sol['primal objective'])
 	
 	# our algo

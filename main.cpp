@@ -88,11 +88,21 @@ void optimize(int n, double *lb, double *ub, double *mu, double *covariance, dou
 	}
 }
 
+void cleanup(double **lb, double **ub, double **mu, double **covariance, double **x, double **new_cov){
+    // free up dynamic allocated memory
+    free(*lb);
+    free(*ub);
+    free(*mu);
+    free(*covariance);
+    free(*x);
+    free(*new_cov);
+}
+
 int main(int argc, char **argv)
 {
     int retcode = 0;
     int n;
-    double *lb, *ub, *covariance, *mu, lambda;
+    double *lb = NULL, *ub = NULL, *covariance = NULL, *mu = NULL, lambda;
 	srand((long)time(NULL));
     
     if (argc != 2){
@@ -102,7 +112,7 @@ int main(int argc, char **argv)
     
     retcode = readit(argv[1], &n, &lb, &ub, &mu, &covariance, &lambda);
     
-    double *x;
+    double *x = NULL;
     int is_feasible;
     is_feasible = feasible(lb, ub, mu, &x, n);
     if (is_feasible == 1){
@@ -116,7 +126,7 @@ int main(int argc, char **argv)
 	printf("Extra Credit\n\n");
 	int num_spectra = 2;
 	double tol = 0.01;
-	double* new_cov;
+	double* new_cov = NULL;
 	//run_power(covariance, n, num_spectra, &new_cov);
 	run_power(covariance, n, tol, &new_cov);
 
@@ -126,6 +136,7 @@ int main(int argc, char **argv)
 	print_square_matrix(new_cov, n);
 	optimize(n, lb, ub, mu, new_cov, lambda, &x);
 	print_vector(x, n);
+    cleanup(&lb, &ub, &mu, &covariance, &x, &new_cov);
 	return retcode;
 //BACK:
 //    return retcode;
@@ -160,17 +171,31 @@ int readit(char *filename, int *address_of_n, double **plb, double **pub,
     printf("n = %d\n", n);
     
     lb = (double *)calloc(n, sizeof(double));
+    if (lb == NULL) {
+        printf("not enough memory for lb\n"); readcode = 3; goto BACK;
+    }
     *plb = lb;
     ub = (double *)calloc(n, sizeof(double));
+    if (ub == NULL) {
+        free(lb);
+        printf("not enough memory for ub\n"); readcode = 3; goto BACK;
+    }
     *pub = ub;
     mu = (double *)calloc(n, sizeof(double));
+    if (mu == NULL) {
+        free(lb);
+        free(ub);
+        printf("not enough memory for mu\n"); readcode = 3; goto BACK;
+    }
     *pmu = mu;
     covariance = (double *)calloc(n*n, sizeof(double));
-    *pcovariance = covariance;
-    
-    if (!lb || !ub || !mu || !covariance){
-        printf("not enough memory for lb ub mu covariance\n"); readcode = 3; goto BACK;
+    if (covariance == NULL) {
+        free(lb);
+        free(ub);
+        free(mu);
+        printf("not enough memory for covariance\n"); readcode = 3; goto BACK;
     }
+    *pcovariance = covariance;
     
     fscanf(datafile, "%s", buffer);
     
