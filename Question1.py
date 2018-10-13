@@ -13,7 +13,28 @@ from cvxopt import matrix, solvers
 from func import readdata, feasible, eval_objective
 from power import runpower
 
+
 def optimize(alldata, num_iter, covariance_type = 'original'):
+	"""
+	Optimization algorithm, as described in algo2.pdf
+	Parameters
+	---------
+		alldata: a dictionary of the following form:
+			'n': size of the QP problem
+			'lower': lower bound vector
+			'upper': upper bound vector
+			'x': solution vector
+			'lambda': value of lambda
+			'covariance': covariance matrix
+		num_iter: int, maximum number of iterations
+		covariance_type: string
+			'original': original version (question1)
+			'modified': extra credit
+			otherwise will raise exception
+	Returns
+	-------
+		No returns
+	"""
 	assert covariance_type in ['original', 'modified']
 	# our algo
 	x = alldata['x']
@@ -67,6 +88,23 @@ def optimize(alldata, num_iter, covariance_type = 'original'):
 	return
 	
 def apply_factor(alldata, total_components):
+	"""
+	Apply factor model as described in factor.pdf to modify our QP program
+	Spectra are computed using power method
+	Parameters
+	----------
+		alldata: a dictionary of the following form:
+			'n': size of the QP problem
+			'lower': lower bound vector
+			'upper': upper bound vector
+			'x': solution vector
+			'lambda': value of lambda
+			'covariance': covariance matrix
+		total_components: number of spectra to use
+	Returns
+	-------
+		No returns
+	"""
 #==============================================================================
 # 	e_values, e_vectors = np.linalg.eigh(alldata['covariance'])
 # 	e_values = e_values[::-1]
@@ -87,7 +125,7 @@ def apply_factor(alldata, total_components):
 if __name__ == "__main__":
 	if len(sys.argv) != 2:
 		sys.exit("datafile")
-		
+	num_spectra = 1
 	filename = sys.argv[1]
 	print("input: ", sys.argv[1])
 	
@@ -108,7 +146,7 @@ if __name__ == "__main__":
 	print(sol['x'], sol['primal objective'])
 	
 	# our algo
-	num_iter = 20000
+	num_iter = 100000
 
 	optimize(alldata, num_iter)
 	print(alldata['x'], eval_objective(alldata['lambda'], alldata['covariance'],
@@ -116,7 +154,7 @@ if __name__ == "__main__":
 		
 
 	# Extra Credit					
-	apply_factor(alldata, 2)
+	apply_factor(alldata, num_spectra)
 	
 	# use outside library
 	Q = 2 * matrix(alldata['modified_covariance'] * alldata['lambda'])

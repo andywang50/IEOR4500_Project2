@@ -1,5 +1,14 @@
 #include "linalg.h"
 
+/*
+	Sum of two vectors of the same size
+	Parameters
+		double *v1: first vector
+		double *v2: second vector
+		int n: size of the vectors
+	Return
+		sum of the two vectors as double*
+*/
 double* vectorAdd(double* v1, double* v2, int n) {
 	double *result = (double *)calloc(n, sizeof(double));
 	for (int i = 0; i < n; ++i) {
@@ -9,8 +18,15 @@ double* vectorAdd(double* v1, double* v2, int n) {
 	return result;
 }
 
-
-
+/*
+	Scaler times a vector (or matrix)
+	Parameters
+		double scaler: scaler
+		double *v: vector
+		int n: size of the vectors
+	Return
+		the scaler product as double*
+*/
 double* scalerProduct(double scaler, double* v, int n) {
 	double *result = (double *)calloc(n, sizeof(double));
 	for (int i = 0; i < n; ++i) {
@@ -21,10 +37,28 @@ double* scalerProduct(double scaler, double* v, int n) {
 	return result;
 }
 
+/*
+	Difference between two vectors of the same size
+	Parameters
+		double *v1: first vector
+		double *v2: second vector
+		int n: size of the vectors
+	Return
+		difference between the two vectors as double*
+*/
 double* vectorSubstract(double* v1, double* v2, int n) {
 	return vectorAdd(v1, scalerProduct(-1.0, v2, n), n);
 }
 
+/*
+	Dot product of two vectors of the same size
+	Parameters
+		double *v1: first vector
+		double *v2: second vector
+		int n: size of the vectors
+	Return
+		Dot product of two vectors as double
+*/
 double dotProduct(double* v1, double* v2, int n) {
 	double result = 0.0;
 	for (int j = 0; j < n; j++) {
@@ -33,6 +67,14 @@ double dotProduct(double* v1, double* v2, int n) {
 	return result;
 }
 
+/*
+	norm of a vector
+	Parameters
+		double *v: vector
+		int n: size of the vector
+	Return
+		norm of the vector as double
+*/
 double norm(double* v, int n) {
 	double result = 0.0;
 	result = dotProduct(v, v, n);
@@ -40,6 +82,15 @@ double norm(double* v, int n) {
 	return result;
 }
 
+/*
+	Cross product (outer product) of two vectors of the same size
+	Parameters
+		double *v1: first vector
+		double *v2: second vector
+		int n: size of the vectors
+	Return
+		Cross product (outer product) of the two vectors as double*
+*/
 double* crossProduct(double* v1, double* v2, int n) {
 	double *result = (double *)calloc(n*n, sizeof(double));
 	for (int i = 0; i < n; ++i) {
@@ -52,7 +103,13 @@ double* crossProduct(double* v1, double* v2, int n) {
 
 
 /*
- Assume mat is a square matrix of size n*n
+	Matrix times vector  (Assume mat is a square matrix of size n*n)
+	Parameters
+		double *mat: matrix
+		double *v: vector
+		int n: size of the vector
+	Return
+		Product as double*
  */
 double* matrixTimesVector(double* mat, double* v, int n) {
 	double *result = (double *)calloc(n, sizeof(double));
@@ -67,6 +124,14 @@ double* matrixTimesVector(double* mat, double* v, int n) {
 
 }
 
+/*
+	normalize the vector in place
+	Parameters
+		double **pv: address of the vector
+		int n: size of the vector
+	Return
+		void
+ */
 void normalize(double** pv, int n) {
 	double normv = norm(*pv, n);
 	for (int i = 0; i < n; ++i) {
