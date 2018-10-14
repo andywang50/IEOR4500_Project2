@@ -1,6 +1,38 @@
 #include "linalg.h"
 
 /*
+	print a vector in console
+	Parameters:
+		double *v: array
+		int n: size
+	Returns:
+		void
+*/
+void print_vector(double* v, int n) {
+	for (int i = 0; i < n; ++i) {
+		printf("%f, ", v[i]);
+	}
+	printf("\n");
+}
+
+/*
+	print a matrix in console
+	Parameters:
+		double *matrix: the matrix array (assumes its a square matrix with size n)
+		int n: size of the square matrix (n*n entries)
+	Returns:
+		void
+*/
+void print_square_matrix(double* mat, int n) {
+	for (int i = 0; i < n; ++i) {
+		for (int j = 0; j < n; ++j) {
+			printf("%f, ", mat[i*n + j]);
+		}
+		printf("\n");
+	}
+}
+
+/*
 	Sum of two vectors of the same size
 	Parameters
 		double *v1: first vector

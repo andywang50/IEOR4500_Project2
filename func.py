@@ -43,7 +43,8 @@ def feasible(alldata):
 
 	Returns
 	-------
-		No returns
+		False if infeasible
+		True if feasible found
 	"""
 	n = alldata['n']
 	lower = alldata['lower']
@@ -54,6 +55,10 @@ def feasible(alldata):
 	x = np.copy(lower)
 
 	sumx = np.sum(x) 
+	
+	if sumx > 1.0:
+		print("Infeasible.")
+		return False
 
 	for j in range(0,n):
 		print("lower", lower, "upper",upper)
@@ -69,9 +74,15 @@ def feasible(alldata):
 			sumx += upper[j] - lower[j]
 			print(">>>>",j, x[j], sumx )
 
+	sumx = np.sum(x) 
+	
+	if sumx < 1.0:
+		print("Infeasible.")
+		return False
+		
 	print(x)
 	alldata['x'] = x
-
+	return True
 
 def breakexit(foo):
 	stuff = input("("+foo+") break> ")

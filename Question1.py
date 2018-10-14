@@ -131,8 +131,20 @@ if __name__ == "__main__":
 	
 	alldata = readdata(filename)
     
-	feasible(alldata)
+	is_feasible = feasible(alldata)
 
+	if not is_feasible:
+		sys.exit("Exiting...")
+
+	# our algo
+	num_iter = 100000
+	print("Our algorithm")
+
+	optimize(alldata, num_iter)
+	print(alldata['x'], eval_objective(alldata['lambda'], alldata['covariance'],
+							alldata['mu'], alldata['x']))
+
+	print("Compared to outside library cvxopt")
 	# use outside library
 	Q = 2 * matrix(alldata['covariance'] * alldata['lambda'])
 	p = -matrix(alldata['mu'])
@@ -144,31 +156,27 @@ if __name__ == "__main__":
 	sol=solvers.qp(Q, p, G, h, A, b)
 
 	print(sol['x'], sol['primal objective'])
-	
-	# our algo
-	num_iter = 100000
+			
 
-	optimize(alldata, num_iter)
-	print(alldata['x'], eval_objective(alldata['lambda'], alldata['covariance'],
-							alldata['mu'], alldata['x']))
-		
-
+	print("\n\nExtra Credit")
+	print("Doing PCA with ", num_spectra, " spectra.")
 	# Extra Credit					
 	apply_factor(alldata, num_spectra)
 	
 	# use outside library
-	Q = 2 * matrix(alldata['modified_covariance'] * alldata['lambda'])
-	sol=solvers.qp(Q, p, G, h, A, b)
-	
-	print(sol['x'], sol['primal objective'])
-	
+
 	# our algo	
+	print("Our algorithm")
+	
 	
 	optimize(alldata, num_iter, 'modified')
 	print(alldata['x'], eval_objective(alldata['lambda'], alldata['modified_covariance'],
 							alldata['mu'], alldata['x']))
 							
-	
+	print("Compared to outside library cvxopt")
 
+	Q = 2 * matrix(alldata['modified_covariance'] * alldata['lambda'])
+	sol=solvers.qp(Q, p, G, h, A, b)
 	
-
+	print(sol['x'], sol['primal objective'])
+	

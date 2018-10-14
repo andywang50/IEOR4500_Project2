@@ -12,3 +12,5 @@ double* crossProduct(double* v1, double* v2, int n);
 double* matrixTimesVector(double* mat, double* v, int n);
 
 void normalize(double** pv, int n);
+void print_vector(double*, int);
+void print_square_matrix(double*, int);
