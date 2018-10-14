@@ -55,42 +55,42 @@ def optimize(alldata, num_iter, covariance_type = 'original'):
 		gk = 2 * lambdaval * np.matmul(cov, x) - mu
 		y = np.zeros(n)
 		best_improvement = np.inf
-		for i in range(0, n):
-			threshold = gk[i]
-			y_cand = np.zeros(n)
-			for j in range(0, n):
-				if i==j:
-					continue
-				if gk[j] < threshold:
-					delta = ub[j] - x[j]
-					y_cand[j] = delta
-				else:
-					delta = x[j] - lb[j]
-					y_cand[j] = delta
-			y_cand[i] = -np.sum(y_cand)
-			if x[i] + y_cand[i] <= ub[i] and x[i] - y_cand[i] >= lb[i]:
-				improvement = np.dot(gk, y_cand)
-				if improvement < best_improvement:
-					best_improvement = improvement
-					y=y_cand
 #==============================================================================
-# 		argsort = gk.argsort();
-# 		for id_m in range(0,n):
-# 			m = argsort[id_m]
+# 		for i in range(0, n):
+# 			threshold = gk[i]
 # 			y_cand = np.zeros(n)
-# 			for id_j in range(0,id_m):
-# 				j = argsort[id_j]
-# 				y_cand[j] = ub[j] - x[j]
-# 			for id_j in range(id_m+1, n):
-# 				j = argsort[id_j]				
-# 				y_cand[j] = lb[j] - x[j]
-# 			y_cand[m] = -np.sum(y_cand)
-# 			if x[m] + y_cand[m] <= ub[m] and x[m] + y_cand[m] >= lb[m]:
+# 			for j in range(0, n):
+# 				if i==j:
+# 					continue
+# 				if gk[j] < threshold:
+# 					delta = ub[j] - x[j]
+# 					y_cand[j] = delta
+# 				else:
+# 					delta = x[j] - lb[j]
+# 					y_cand[j] = delta
+# 			y_cand[i] = -np.sum(y_cand)
+# 			if x[i] + y_cand[i] <= ub[i] and x[i] - y_cand[i] >= lb[i]:
 # 				improvement = np.dot(gk, y_cand)
 # 				if improvement < best_improvement:
 # 					best_improvement = improvement
-# 					y = y_cand
+# 					y=y_cand
 #==============================================================================
+		argsort = gk.argsort();
+		for id_m in range(0,n):
+			m = argsort[id_m]
+			y_cand = np.zeros(n)
+			for id_j in range(0,id_m):
+				j = argsort[id_j]
+				y_cand[j] = ub[j] - x[j]
+			for id_j in range(id_m+1, n):
+				j = argsort[id_j]				
+				y_cand[j] = lb[j] - x[j]
+			y_cand[m] = -np.sum(y_cand)
+			if x[m] + y_cand[m] <= ub[m] and x[m] + y_cand[m] >= lb[m]:
+				improvement = np.dot(gk, y_cand)
+				if improvement < best_improvement:
+					best_improvement = improvement
+					y = y_cand
 		if abs(best_improvement) < 1e-6:
 			break
 		## improvement phase 2
@@ -143,7 +143,7 @@ def apply_factor(alldata, total_components):
 if __name__ == "__main__":
 	if len(sys.argv) != 2:
 		sys.exit("datafile")
-	num_spectra = 1
+	num_spectra = 2
 	filename = sys.argv[1]
 	print("input: ", sys.argv[1])
 	

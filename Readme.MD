@@ -16,7 +16,7 @@ python part:
 	
 	Extra credit part:
 	
-	using only 1 spectra when doing the pca. (the number of spectra can be changed by changing the "num_spectra" variable in line 128 in Question1.py
+	using only 1 spectra when doing the pca. (the number of spectra can be changed by changing the "num_spectra" variable in line 146 in Question1.py
 	
 	PCA is done using power method as in Project 1.
 	
